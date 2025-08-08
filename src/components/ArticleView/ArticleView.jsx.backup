@@ -98,17 +98,15 @@ const ArticleView = () => {
   }, [articleId, $filteredArticles]);
 
   const handleLinkWithImg = (domNode) => {
-    const imgNodes = domNode.children.filter(
+    const imgNode = domNode.children.find(
       (child) => child.type === "tag" && child.name === "img",
     );
 
-    if (imgNodes.length > 0) {
+    if (imgNode) {
       const hostname = getHostname(domNode.attribs.href);
       return (
         <>
-          {imgNodes.map((imgNode, index) => (
-            <ArticleImage imgNode={imgNode} key={imgNode.attribs?.src || index} />
-          ))}
+          <ArticleImage imgNode={imgNode} />
           <div className="flex justify-center">
             <Chip
               color="primary"
@@ -119,7 +117,7 @@ const ArticleView = () => {
             >
               <a
                 href={domNode.attribs.href}
-                className="border-none!"
+                className="!border-none"
                 rel="noopener noreferrer"
                 target="_blank"
               >
@@ -144,16 +142,18 @@ const ArticleView = () => {
         <motion.div
           key={articleId ? "content" : "empty"}
           className={cn(
-            "flex-1 p-0 h-screen fixed md:static inset-0 z-20",
+            "flex-1 p-0 md:pr-2 md:py-2 h-screen fixed md:static inset-0 z-20",
             !articleId ? "hidden md:flex md:flex-1" : "",
           )}
           initial={
-            articleId ? { opacity: 1, x: 40 } : { opacity: 0, x: 0, scale: 0.8 }
+            articleId
+              ? { opacity: 1, x: "100%" }
+              : { opacity: 0, x: 0, scale: 0.8 }
           }
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={
             articleId
-              ? { opacity: 0, x: 40, scale: 1 }
+              ? { opacity: 0, x: "100%", scale: 1 }
               : { opacity: 0, x: 0, scale: 0.8 }
           }
           transition={{
@@ -169,7 +169,7 @@ const ArticleView = () => {
             <ScrollShadow
               ref={scrollAreaRef}
               isEnabled={false}
-              className="article-scroll-area h-full bg-content2 md:bg-transparent"
+              className="article-scroll-area h-full bg-background rounded-none md:rounded-lg shadow-none md:shadow-custom"
             >
               <ActionButtons parentRef={scrollAreaRef} />
 
@@ -202,7 +202,7 @@ const ArticleView = () => {
                         titleAlignType === "center" ? "justify-center" : "",
                       )}
                     >
-                      <FeedIcon feedId={$activeArticle?.feed?.id || $activeArticle?.feedId} />
+                      <FeedIcon feedId={$activeArticle?.feed?.id} />
                       {$activeArticle?.feed?.title}
                     </div>
                     <h1

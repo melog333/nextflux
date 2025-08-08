@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useStore } from "@nanostores/react";
 import {
   activeArticle,
@@ -21,7 +21,6 @@ import { useSidebarNavigation } from "@/hooks/useSidebarNavigation";
 
 export function useHotkeys() {
   const navigate = useNavigate();
-  const location = useLocation();
   const $articles = useStore(filteredArticles);
   const $activeArticle = useStore(activeArticle);
   const $imageGalleryActive = useStore(imageGalleryActive);
@@ -31,28 +30,8 @@ export function useHotkeys() {
   // 获取当前文章在列表中的索引
   const currentIndex = $articles.findIndex((a) => a.id === $activeArticle?.id);
 
-  // Fixed: Better basePath calculation that handles all cases
-  const getBasePath = () => {
-    const pathname = location.pathname;
-    
-    // If we're already on an article page, remove the article part
-    if (pathname.includes("/article/")) {
-      return pathname.split("/article/")[0];
-    }
-    
-    // If we're on a feed page (e.g., /feed/123), stay there
-    if (pathname.startsWith("/feed/")) {
-      return pathname;
-    }
-    
-    // If we're on a category page (e.g., /category/123), stay there  
-    if (pathname.startsWith("/category/")) {
-      return pathname;
-    }
-    
-    // Default to root for home page
-    return pathname === "/" ? "" : pathname;
-  };
+  // 获取当前路径并去掉 article 部分
+  const basePath = window.location.pathname.split("/article/")[0];
 
   useEffect(() => {
     const handleKeyDown = async (e) => {
@@ -83,40 +62,19 @@ export function useHotkeys() {
           searchDialogOpen.set(true);
           break;
 
-        case "j": // 下一篇 - FIXED VERSION
-          e.preventDefault();
+        case "j": // 下一篇
           if (!articleId) {
-            // No article selected - navigate to first article
             if ($articles.length === 0) {
-              console.log("No articles available");
               return;
             }
-            const firstArticle = $articles[0];
-            if (!firstArticle?.id) {
-              console.log("First article has no ID");
-              return;
-            }
-            
-            const basePath = getBasePath();
-            const targetPath = basePath ? `${basePath}/article/${firstArticle.id}` : `/article/${firstArticle.id}`;
-            
-            console.log("Navigating to first article:", targetPath);
-            navigate(targetPath);
-            
-            if (firstArticle.status !== "read") {
-              await handleMarkStatus(firstArticle);
+            const nextArticle = $articles[0];
+            navigate(`${basePath}/article/${nextArticle.id}`);
+            if (nextArticle.status !== "read") {
+              await handleMarkStatus(nextArticle);
             }
           } else if (currentIndex < $articles.length - 1) {
-            // Article selected - navigate to next article
             const nextArticle = $articles[currentIndex + 1];
-            if (!nextArticle?.id) {
-              return;
-            }
-            
-            const basePath = getBasePath();
-            const targetPath = basePath ? `${basePath}/article/${nextArticle.id}` : `/article/${nextArticle.id}`;
-            
-            navigate(targetPath);
+            navigate(`${basePath}/article/${nextArticle.id}`);
             if (nextArticle.status !== "read") {
               await handleMarkStatus(nextArticle);
             }
@@ -124,17 +82,9 @@ export function useHotkeys() {
           break;
 
         case "k": // 上一篇
-          e.preventDefault();
           if (currentIndex > 0) {
             const prevArticle = $articles[currentIndex - 1];
-            if (!prevArticle?.id) {
-              return;
-            }
-            
-            const basePath = getBasePath();
-            const targetPath = basePath ? `${basePath}/article/${prevArticle.id}` : `/article/${prevArticle.id}`;
-            
-            navigate(targetPath);
+            navigate(`${basePath}/article/${prevArticle.id}`);
             if (prevArticle.status !== "read") {
               await handleMarkStatus(prevArticle);
             }
@@ -163,7 +113,6 @@ export function useHotkeys() {
           if ($imageGalleryActive) {
             return;
           } else {
-            const basePath = getBasePath();
             navigate(basePath || "/");
           }
           break;
@@ -210,9 +159,9 @@ export function useHotkeys() {
     $activeArticle,
     currentIndex,
     $articles,
+    basePath,
     navigate,
     articleId,
-    location.pathname, // Added this dependency
     $imageGalleryActive,
     navigateToPrevious,
     navigateToNext,
