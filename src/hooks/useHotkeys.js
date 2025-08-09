@@ -5,6 +5,8 @@ import {
   activeArticle,
   filteredArticles,
   imageGalleryActive,
+  loadArticles,
+  filter,
 } from "@/stores/articlesStore";
 import {
   handleMarkStatus,
@@ -153,12 +155,37 @@ export function useHotkeys() {
           }
           break;
 
-        case "r": // 刷新
-          if (!e.ctrlKey && !e.metaKey) {
-            await forceSync();
-          }
-          break;
-
+        case "r": // 刷新 - Enhanced with clear view
+  e.preventDefault();
+  if (!e.ctrlKey && !e.metaKey) {
+    console.log("Refresh: Starting sync and clear process");
+    
+    // Perform the sync
+    await forceSync();
+    
+    // Wait for sync to complete, then clear the view
+    setTimeout(async () => {
+      try {
+        // 1. Clear active article (deselect)
+        activeArticle.set(null);
+        
+        // 2. Switch to unread filter to hide read articles
+        filter.set("unread");
+        
+        // 3. Navigate to home view (clear any feed/category selection)
+        navigate("/");
+        
+        // 4. Reload articles with unread filter
+        await loadArticles(null, "feed", 1, false);
+        
+        console.log("Refresh complete: View cleared, switched to unread, article deselected");
+        
+      } catch (error) {
+        console.error("Failed to clear view after refresh:", error);
+      }
+    }, 1000); // Wait 1 second for sync to complete
+  }
+  break;
         case "escape": // 关闭文章
           if ($imageGalleryActive) {
             return;
