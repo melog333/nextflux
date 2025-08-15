@@ -7,6 +7,7 @@ import {
   imageGalleryActive,
   loadArticles,
   filter,
+  visibleRange,
 } from "@/stores/articlesStore";
 import {
   handleMarkStatus,
@@ -159,6 +160,9 @@ export function useHotkeys() {
   e.preventDefault();
   if (!e.ctrlKey && !e.metaKey) {
     console.log("Refresh: Starting sync and clear process");
+    
+    // Reset scroll position to top to ensure refresh works
+    visibleRange.set({ startIndex: 0, endIndex: 0 });
     
     // Perform the sync
     await forceSync();
